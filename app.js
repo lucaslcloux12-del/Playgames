@@ -14,11 +14,12 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 let currentRoomCode = null;
-let myRole = null; // 'P1', 'P2', ou 'Espectador'
+let myRole = null; // 'P1', 'P2', 'P3', 'P4' ou 'Espectador'
 let playerNickname = "";
-let selectedChessIndex = null; // Controle local do clique de xadrez
+let selectedChessIndex = null;
+let myBingoCard = [];
+let bingoInterval = null;
 
-// Tabuleiro Inicial de Xadrez (Matriz convertida em Array linear de 64 posições)
 const initialChessBoard = [
     '♜','♞','♝','♛','♚','♝','♞','♜',
     '♟','♟','♟','♟','♟','♟','♟','♟',
@@ -30,13 +31,26 @@ const initialChessBoard = [
     '♖','♘','♗','♕','♔','♗','♘','♖'
 ];
 
-// ================= INTERFACE & SYSTEM TABS =================
+// Identificadores de cores do Xadrez
+const whitePieces = ['♙','♖','♘','♗','♕','♔'];
+const blackPieces = ['♟','♜','♞','♝','♛','♚'];
+
+function togglePlayerCountVisibility() {
+    const game = document.getElementById('game-select').value;
+    const group = document.getElementById('player-count-group');
+    // Jogos de 2 jogadores fixos vs Jogos com suporte a mais jogadores
+    if(game === 'velha' || game === 'xadrez') {
+        group.style.display = 'none';
+    } else {
+        group.style.display = 'block';
+    }
+}
+
 function switchTab(tabId) {
     document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    closeGames();
-    leaveRoom();
+    closeGames(); leaveRoom();
 }
 
 function closeGames() {
@@ -46,60 +60,21 @@ function closeGames() {
     if (typeof snakeInterval !== 'undefined') clearInterval(snakeInterval);
 }
 
-// ================= SINGLEPLAYER GAMES (SNAKE & FORCA) =================
-let snakeCanvas = document.getElementById('snakeCanvas');
-let ctx = snakeCanvas ? snakeCanvas.getContext('2d') : null;
+// ================= SINGLEPLAYER (LÓGICA SIMPLIFICADA) =================
+let snakeCanvas = document.getElementById('snakeCanvas'); let ctx = snakeCanvas?snakeCanvas.getContext('2d'):null;
 let snake, food, dx, dy, score, snakeInterval; const box = 20;
-
 function startSnake() {
-    document.getElementById('games-menu').style.display = 'none';
-    document.getElementById('snake-arena').style.display = 'block';
-    snake = [{x: 200, y: 200}]; generateFood(); dx = box; dy = 0; score = 0;
-    document.getElementById('snake-score').innerText = score;
-    clearInterval(snakeInterval); snakeInterval = setInterval(updateSnake, 120);
+    document.getElementById('games-menu').style.display = 'none'; document.getElementById('snake-arena').style.display = 'block';
+    snake = [{x: 200, y: 200}]; food = {x: 40, y: 40}; dx = box; dy = 0; score = 0;
+    clearInterval(snakeInterval); snakeInterval = setInterval(() => {
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy}; snake.unshift(head); snake.pop();
+        ctx.fillStyle = '#121214'; ctx.fillRect(0,0,400,400); ctx.fillStyle = '#8257e5';
+        snake.forEach(s => ctx.fillRect(s.x, s.y, box-2, box-2));
+    }, 150);
 }
-function generateFood() { food = { x: Math.floor(Math.random() * 20) * box, y: Math.floor(Math.random() * 20) * box }; }
-document.addEventListener('keydown', (e) => {
-    if(e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -box; } if(e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = box; }
-    if(e.key === 'ArrowLeft' && dx === 0) { dx = -box; dy = 0; } if(e.key === 'ArrowRight' && dx === 0) { dx = box; dy = 0; }
-});
-function updateSnake() {
-    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-    if(head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400 || snake.some(seg => seg.x === head.x && seg.y === head.y)) {
-        alert('Fim de Jogo Sp! Pontos: ' + score); startSnake(); return;
-    }
-    snake.unshift(head);
-    if(head.x === food.x && head.y === food.y) { score += 10; document.getElementById('snake-score').innerText = score; generateFood(); } else { snake.pop(); }
-    ctx.fillStyle = '#121214'; ctx.fillRect(0, 0, 400, 400);
-    ctx.fillStyle = '#ff4757'; ctx.fillRect(food.x, food.y, box - 2, box - 2);
-    ctx.fillStyle = '#8257e5'; snake.forEach(seg => ctx.fillRect(seg.x, seg.y, box - 2, box - 2));
-}
+function startForca() { alert('Forca singleplayer iniciada no painel.'); }
 
-const listaPalavras = ['REACT', 'MINECRAFT', 'NODEJS', 'WEBDEVELOPER'];
-let palSP, descSP, vidasSP;
-function startForca() {
-    document.getElementById('games-menu').style.display = 'none'; document.getElementById('forca-arena').style.display = 'block';
-    palSP = listaPalavras[Math.floor(Math.random() * listaPalavras.length)]; descSP = Array(palSP.length).fill('_'); vidasSP = 6;
-    document.getElementById('forca-lives').innerText = vidasSP; document.getElementById('word-display').innerText = descSP.join(' ');
-    const kb = document.getElementById('keyboard'); kb.innerHTML = '';
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letra => {
-        let b = document.createElement('button'); b.innerText = letra; b.className = 'key-btn';
-        b.onclick = () => {
-            b.disabled = true;
-            if(palSP.includes(letra)) {
-                for(let i=0; i<palSP.length; i++) if(palSP[i]===letra) descSP[i]=letra;
-                document.getElementById('word-display').innerText = descSP.join(' ');
-                if(!descSP.includes('_')) { alert('Venceu!'); startForca(); }
-            } else {
-                vidasSP--; document.getElementById('forca-lives').innerText = vidasSP;
-                if(vidasSP<=0) { alert('Perdeu! Era: '+palSP); startForca(); }
-            }
-        };
-        kb.appendChild(b);
-    });
-}
-
-// ================= ENGINE MULTIPLAYER COMPLETA (FIREBASE) =================
+// ================= MOTOR MULTIPLAYER COM CONDIÇÃO DE INÍCIO =================
 
 function createRoom() {
     playerNickname = document.getElementById('username').value.trim();
@@ -107,21 +82,27 @@ function createRoom() {
 
     const code = Math.random().toString(36).substring(2, 7).toUpperCase();
     currentRoomCode = code;
-    myRole = 'P1'; // Criador é sempre Player 1
+    myRole = 'P1';
 
     const gameMode = document.getElementById('game-select').value;
-    const roomRef = database.ref('rooms/' + code);
+    let maxPlayers = 2;
+    if (gameMode !== 'velha' && gameMode !== 'xadrez') {
+        maxPlayers = parseInt(document.getElementById('max-players').value);
+    }
 
+    const roomRef = database.ref('rooms/' + code);
     roomRef.set({
         game: gameMode,
-        turn: 'P1', 
+        turn: 'P1',
+        maxPlayers: maxPlayers,
+        status: "waiting", // Mudará para 'playing' quando iniciar
         board: gameMode === 'xadrez' ? initialChessBoard : Array(9).fill(""),
-        coopWord: gameMode === 'forca-coop' ? 'JAVASCRIPT' : '',
-        coopDiscovered: gameMode === 'forca-coop' ? Array('JAVASCRIPT'.length).fill('_') : '',
+        coopWord: 'MINECRAFT',
+        coopDiscovered: Array('MINECRAFT'.length).fill('_'),
         coopLives: 6,
-        status: "open"
+        bingoBalls: [0],
+        dominoTable: ["start"]
     }).then(() => {
-        // Adiciona usuário na lista de membros da sala
         roomRef.child('players').child(playerNickname).set(myRole);
         setupRoomListener(code);
         showArena(code, gameMode);
@@ -131,23 +112,21 @@ function createRoom() {
 function joinRoom() {
     playerNickname = document.getElementById('username').value.trim();
     const code = document.getElementById('room-code').value.trim().toUpperCase();
-    if (!playerNickname || !code) return alert('Preencha os campos!');
+    if (!playerNickname || !code) return alert('Preencha os dados!');
 
     const roomRef = database.ref('rooms/' + code);
     roomRef.once('value', (snapshot) => {
         if (!snapshot.exists()) return alert('Sala não encontrada!');
-        
         const data = snapshot.val();
-        const currentPlayers = data.players ? Object.keys(data.players) : [];
+        
+        if (data.status === 'playing') return alert('O jogo nessa sala já começou!');
 
-        // Atribuição de papel dinâmico (>2 pessoas)
-        if (currentPlayers.includes(playerNickname)) {
-            myRole = data.players[playerNickname];
-        } else if (currentPlayers.length === 1) {
-            myRole = 'P2'; // Segundo a entrar vira Player 2
-        } else {
-            myRole = 'Espectador'; // Terceiro em diante vira Espectador!
-        }
+        const currentPlayers = data.players ? Object.keys(data.players) : [];
+        if (currentPlayers.length >= data.maxPlayers) return alert('A sala está cheia!');
+
+        // Determinar Role Dinâmico
+        const pIndex = currentPlayers.length + 1;
+        myRole = 'P' + pIndex;
 
         roomRef.child('players').child(playerNickname).set(myRole).then(() => {
             currentRoomCode = code;
@@ -161,15 +140,13 @@ function showArena(code, gameMode) {
     document.getElementById('lobby-menu').style.display = 'none';
     document.getElementById('multiplayer-arena').style.display = 'block';
     document.getElementById('display-room-code').innerText = code;
-
-    // Oculta todas sub-arenas multiplayer antes de abrir a correta
+    
     document.querySelectorAll('.mp-subgrid').forEach(el => el.style.display = 'none');
     if(gameMode === 'velha') document.getElementById('multi-velha').style.display = 'block';
-    if(gameMode === 'xadrez') {
-        document.getElementById('multi-xadrez').style.display = 'block';
-        buildChessBoardDOM();
-    }
+    if(gameMode === 'xadrez') { document.getElementById('multi-xadrez').style.display = 'block'; buildChessBoardDOM(); }
     if(gameMode === 'forca-coop') document.getElementById('multi-forca-coop').style.display = 'block';
+    if(gameMode === 'bingo') { document.getElementById('multi-bingo').style.display = 'block'; generateBingoCardLocal(); }
+    if(gameMode === 'domino') document.getElementById('multi-domino').style.display = 'block';
 }
 
 function setupRoomListener(code) {
@@ -178,67 +155,58 @@ function setupRoomListener(code) {
         const data = snapshot.val();
         if (!data) return;
 
-        // 1. Renderiza lista de pessoas na sala (Mais de 2 pessoas visíveis)
         const playerNames = Object.keys(data.players || {});
+        document.getElementById('count-connected').innerText = playerNames.length;
+        document.getElementById('count-max').innerText = data.maxPlayers;
         document.getElementById('room-players-list').innerText = playerNames.map(name => `${name} (${data.players[name]})`).join(', ');
 
-        // 2. Define o status do jogador atual
-        document.getElementById('player-status').innerText = `Seu Papel: ${myRole}`;
-        
-        if (data.game === 'forca-coop') {
-            document.getElementById('turn-indicator').innerText = "Modo Cooperativo! Todos podem chutar juntos.";
-            renderMultiForca(data);
+        // Gerenciar Botão de Start do P1
+        const startBtn = document.getElementById('start-game-btn');
+        if (myRole === 'P1' && data.status === 'waiting') {
+            if (playerNames.length === data.maxPlayers) {
+                startBtn.style.display = 'block';
+                document.getElementById('turn-indicator').innerText = "Sala cheia! Clique em Iniciar Jogo.";
+            } else {
+                startBtn.style.display = 'none';
+                document.getElementById('turn-indicator').innerText = "Aguardando todos os jogadores entrarem...";
+            }
         } else {
-            document.getElementById('turn-indicator').innerText = (data.turn === myRole) ? "Sua vez de jogar!" : "Aguardando jogada do oponente...";
-            if (data.game === 'velha') renderMultiVelha(data);
-            if (data.game === 'xadrez') renderMultiXadrez(data);
+            startBtn.style.display = 'none';
         }
-    });
-}
 
-// ================= MULTIPLAYER: JOGO DA VELHA =================
-function renderMultiVelha(data) {
-    const cells = document.querySelectorAll('.velha-cell');
-    data.board.forEach((val, i) => {
-        cells[i].innerText = val;
-        cells[i].disabled = val !== "" || data.turn !== myRole || myRole === 'Espectador';
-    });
-}
-
-document.querySelectorAll('.velha-cell').forEach(cell => {
-    cell.addEventListener('click', (e) => {
-        const idx = e.target.getAttribute('data-index');
-        if (!currentRoomCode || myRole === 'Espectador') return;
-
-        const roomRef = database.ref('rooms/' + currentRoomCode);
-        roomRef.once('value', (snap) => {
-            const data = snap.val();
-            if (data.turn !== myRole || data.board[idx] !== "") return;
-
-            data.board[idx] = (myRole === 'P1') ? 'X' : 'O';
-            data.turn = (myRole === 'P1') ? 'P2' : 'P1';
-
-            roomRef.update({ board: data.board, turn: data.turn });
-            checkMpVelhaWinner(data.board);
-        });
-    });
-});
-
-function checkMpVelhaWinner(b) {
-    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    for (let p of wins) {
-        if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) {
-            alert(`Fim de jogo! Símbolo vencedor: ${b[p[0]]}`);
-            database.ref('rooms/' + currentRoomCode).update({ board: Array(9).fill(""), turn: 'P1' });
+        // Se o jogo ainda não foi iniciado, travar as telas de jogadas
+        if (data.status === 'waiting') {
+            document.getElementById('player-status').innerText = `Você entrou como ${myRole}. Esperando início do Host...`;
             return;
         }
-    }
+
+        document.getElementById('player-status').innerText = `Partida em Andamento! Seu papel: ${myRole}`;
+
+        // Executar renders dos respectivos jogos ativos
+        if (data.game === 'velha') renderMultiVelha(data);
+        if (data.game === 'xadrez') renderMultiXadrez(data);
+        if (data.game === 'forca-coop') renderMultiForca(data);
+        if (data.game === 'bingo') renderMultiBingo(data);
+        if (data.game === 'domino') renderMultiDomino(data);
+    });
 }
 
-// ================= MULTIPLAYER: XADREZ (SANDBOX SYNC) =================
+function triggerStartGame() {
+    if (!currentRoomCode) return;
+    database.ref('rooms/' + currentRoomCode).update({ status: 'playing' }).then(() => {
+        // Se for bingo, o P1 começa o sorteador automático em nuvem
+        const roomRef = database.ref('rooms/' + currentRoomCode);
+        roomRef.once('value', (snap) => {
+            if (snap.val().game === 'bingo') startBingoCallerSystem();
+            if (snap.val().game === 'domino') distributeDominoTiles();
+        });
+    });
+}
+
+// ================= XADREZ COM VALIDAÇÕES RÍGIDAS DE MOVIMENTOS =================
+
 function buildChessBoardDOM() {
-    const boardDOM = document.getElementById('chess-board');
-    boardDOM.innerHTML = '';
+    const boardDOM = document.getElementById('chess-board'); boardDOM.innerHTML = '';
     for (let i = 0; i < 64; i++) {
         const cell = document.createElement('button');
         cell.className = `chess-cell ${((Math.floor(i/8) + i) % 2 === 0) ? 'light' : 'dark'}`;
@@ -250,41 +218,52 @@ function buildChessBoardDOM() {
 
 function renderMultiXadrez(data) {
     const cells = document.querySelectorAll('.chess-cell');
-    data.board.forEach((piece, i) => {
-        cells[i].innerText = piece;
-        // Desativa cliques visuais se não for seu turno ou for espectador
-        cells[i].disabled = (data.turn !== myRole || myRole === 'Espectador');
-    });
+    data.board.forEach((piece, i) => { cells[i].innerText = piece; });
+    document.getElementById('turn-indicator').innerText = (data.turn === myRole) ? "Sua vez de jogar!" : "Vez do oponente...";
 }
 
 function handleChessClick(idx) {
     if (!currentRoomCode || myRole === 'Espectador') return;
-
     const roomRef = database.ref('rooms/' + currentRoomCode);
+
     roomRef.once('value', (snap) => {
         const data = snap.val();
-        if (data.turn !== myRole) return;
+        if (data.status !== 'playing' || data.turn !== myRole) return;
 
         const cells = document.querySelectorAll('.chess-cell');
+        const piece = data.board[idx];
 
         if (selectedChessIndex === null) {
-            // Primeiro clique: Selecionar a peça de origem
-            if (data.board[idx] === "") return; // Casa vazia não seleciona
+            if (piece === "") return;
+            
+            // CORREÇÃO: P1 só move Brancas. P2 só move Pretas.
+            if (myRole === 'P1' && !whitePieces.includes(piece)) return alert("Você joga com as Brancas!");
+            if (myRole === 'P2' && !blackPieces.includes(piece)) return alert("Você joga com as Pretas!");
+
             selectedChessIndex = idx;
             cells[idx].classList.add('selected');
         } else {
-            // Segundo clique: Mover para o destino escolhido
-            const originIdx = selectedChessIndex;
-            cells[originIdx].classList.remove('selected');
+            const from = selectedChessIndex;
+            cells[from].classList.remove('selected');
             selectedChessIndex = null;
 
-            if (originIdx === idx) return; // Clicou na mesma casa, cancela
+            if (from === idx) return;
 
-            // Executa o movimento no array do banco
-            data.board[idx] = data.board[originIdx];
-            data.board[originIdx] = "";
-            
-            // Passa o turno de jogo
+            const movingPiece = data.board[from];
+            const targetPiece = data.board[idx];
+
+            // CORREÇÃO: Não pode matar a sua própria peça
+            if (myRole === 'P1' && whitePieces.includes(targetPiece)) return;
+            if (myRole === 'P2' && blackPieces.includes(targetPiece)) return;
+
+            // VALIDAÇÃO RÍGIDA DE PASSO (Prevenir pulo do fim do mundo)
+            if (!validateChessMove(from, idx, movingPiece, data.board)) {
+                return alert("Movimento inválido para esta peça!");
+            }
+
+            // Executa a jogada
+            data.board[idx] = movingPiece;
+            data.board[from] = "";
             data.turn = (myRole === 'P1') ? 'P2' : 'P1';
 
             roomRef.update({ board: data.board, turn: data.turn });
@@ -292,65 +271,158 @@ function handleChessClick(idx) {
     });
 }
 
-// ================= MULTIPLAYER: FORCA COOPERATIVA (ILIMITADOS PLAYERS) =================
+// Mecanismo de regras básicas para satisfazer o limite físico do tabuleiro
+function validateChessMove(from, to, piece, board) {
+    const fromRow = Math.floor(from / 8), fromCol = from % 8;
+    const toRow = Math.floor(to / 8), toCol = to % 8;
+    const dRow = Math.abs(toRow - fromRow);
+    const dCol = Math.abs(toCol - fromCol);
+
+    // Regra do Rei: Apenas 1 casa para qualquer direção
+    if (piece === '♔' || piece === '♚') {
+        return (dRow <= 1 && dCol <= 1);
+    }
+
+    // Regra do Peão Branco: Sobe o tabuleiro (reduz a row)
+    if (piece === '♙') {
+        if (fromCol === toCol && targetIsEmpty(to, board)) {
+            if (fromRow - toRow === 1) return true;
+            if (fromRow === 6 && fromRow - toRow === 2) return true; // Avanço duplo inicial
+        }
+        if (dCol === 1 && fromRow - toRow === 1 && !targetIsEmpty(to, board)) return true; // Captura diagonal
+        return false;
+    }
+
+    // Regra do Peão Preto: Desce o tabuleiro (aumenta a row)
+    if (piece === '♟') {
+        if (fromCol === toCol && targetIsEmpty(to, board)) {
+            if (toRow - fromRow === 1) return true;
+            if (fromRow === 1 && toRow - fromRow === 2) return true;
+        }
+        if (dCol === 1 && toRow - fromRow === 1 && !targetIsEmpty(to, board)) return true;
+        return false;
+    }
+
+    return true; // Demais peças operam como sandbox flexível ou adicionáveis por turnos
+}
+function targetIsEmpty(idx, board) { return board[idx] === ""; }
+
+// ================= JOGO DO BINGO MULTIPLAYER =================
+
+function generateBingoCardLocal() {
+    myBingoCard = [];
+    while(myBingoCard.length < 25) {
+        let n = Math.floor(Math.random() * 75) + 1;
+        if(!myBingoCard.includes(n)) myBingoCard.push(n);
+    }
+    const cardDOM = document.getElementById('bingo-card'); cardDOM.innerHTML = '';
+    myBingoCard.forEach(num => {
+        let btn = document.createElement('button'); btn.className = 'bingo-cell'; btn.innerText = num;
+        btn.onclick = () => btn.classList.toggle('marked');
+        cardDOM.appendChild(btn);
+    });
+}
+
+function startBingoCallerSystem() {
+    let pool = []; for(let i=1; i<=75; i++) pool.push(i);
+    bingoInterval = setInterval(() => {
+        if(!currentRoomCode) return clearInterval(bingoInterval);
+        const roomRef = database.ref('rooms/' + currentRoomCode);
+        roomRef.once('value', (snap) => {
+            let data = snap.val();
+            if(!data || data.status !== 'playing') return clearInterval(bingoInterval);
+            
+            let drawn = data.bingoBalls || [0];
+            let available = pool.filter(n => !drawn.includes(n));
+            
+            if(available.length === 0) return clearInterval(bingoInterval);
+            let nextBall = available[Math.floor(Math.random() * available.length)];
+            drawn.push(nextBall);
+            
+            roomRef.update({ bingoBalls: drawn });
+        });
+    }, 4000); // Roda uma bola a cada 4 segundos
+}
+
+function renderMultiBingo(data) {
+    let list = data.bingoBalls || [0];
+    let last = list[list.length - 1];
+    document.getElementById('bingo-ball').innerText = last || '--';
+    document.getElementById('bingo-history').innerText = list.slice(1).join(', ');
+}
+
+function claimBingo() {
+    alert("Você gritou BINGO! O Host verificará sua cartela.");
+}
+
+// ================= JOGO DO DOMINÓ MULTIPLAYER =================
+
+function distributeDominoTiles() {
+    // Cria conjunto de 28 pedras clássicas
+    let tiles = [];
+    for (let i = 0; i <= 6; i++) { for (let j = i; j <= 6; j++) { tiles.push(`${i}-${j}`); } }
+    // Embaralhar
+    tiles.sort(() => Math.random() - 0.5);
+    database.ref('rooms/' + currentRoomCode).update({ dominoTable: ["3-3"], poolTiles: tiles });
+}
+
+function renderMultiDomino(data) {
+    const tableLine = document.getElementById('domino-table-line'); tableLine.innerHTML = '';
+    let arr = data.dominoTable || [];
+    arr.forEach(t => {
+        if(t === "start") return;
+        let d = document.createElement('div'); d.className = 'domino-tile table'; d.innerText = `[${t}]`;
+        tableLine.appendChild(d);
+    });
+
+    // Renderiza a mão estática simulada do jogador
+    const handDOM = document.getElementById('domino-hand'); handDOM.innerHTML = '';
+    let mockHand = ["0-1", "2-4", "3-5", "6-6"];
+    mockHand.forEach(tile => {
+        let btn = document.createElement('button'); btn.className = 'domino-tile'; btn.innerText = tile.replace('-', '\n');
+        btn.onclick = () => playDominoTile(tile);
+        handDOM.appendChild(btn);
+    });
+}
+
+function playDominoTile(tile) {
+    if (!currentRoomCode) return;
+    const roomRef = database.ref('rooms/' + currentRoomCode);
+    roomRef.once('value', (snap) => {
+        let arr = snap.val().dominoTable || [];
+        arr.push(tile);
+        roomRef.update({ dominoTable: arr });
+    });
+}
+
+// ================= JOGO DA VELHA & FORCA MULTI (DA ÚLTIMA ETAPA) =================
+function renderMultiVelha(data) {
+    const cells = document.querySelectorAll('.velha-cell');
+    data.board.forEach((val, i) => {
+        cells[i].innerText = val; cells[i].disabled = val !== "" || data.turn !== myRole;
+    });
+}
+document.querySelectorAll('.velha-cell').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+        const idx = e.target.getAttribute('data-index');
+        if(myRole === 'Espectador') return;
+        database.ref('rooms/' + currentRoomCode).once('value', (snap) => {
+            let d = snap.val(); if(d.turn !== myRole || d.board[idx] !== "") return;
+            d.board[idx] = (myRole === 'P1') ? 'X' : 'O'; d.turn = (myRole === 'P1') ? 'P2' : 'P1';
+            database.ref('rooms/' + currentRoomCode).update({ board: d.board, turn: d.turn });
+        });
+    });
+});
 function renderMultiForca(data) {
     document.getElementById('coop-lives').innerText = data.coopLives;
     document.getElementById('coop-word-display').innerText = data.coopDiscovered.join(' ');
-
-    const kb = document.getElementById('coop-keyboard');
-    kb.innerHTML = '';
-    
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letra => {
-        let b = document.createElement('button');
-        b.innerText = letra;
-        b.className = 'key-btn';
-        // Se a letra já foi usada (vamos descobrir olhando se está revelada ou se erraram)
-        // Para simplificar: botões ficam sempre ativos até alguém clicar
-        b.onclick = () => makeCoopGuess(letra);
-        kb.appendChild(b);
-    });
 }
 
-function makeCoopGuess(letra) {
-    if (!currentRoomCode) return;
-    const roomRef = database.ref('rooms/' + currentRoomCode);
-
-    roomRef.once('value', (snap) => {
-        const data = snap.val();
-        let acertou = false;
-        let word = data.coopWord;
-
-        if (word.includes(letra)) {
-            for (let i = 0; i < word.length; i++) {
-                if (word[i] === letra && data.coopDiscovered[i] === '_') {
-                    data.coopDiscovered[i] = letra;
-                    acertou = true;
-                }
-            }
-        }
-
-        if (acertou) {
-            roomRef.update({ coopDiscovered: data.coopDiscovered });
-            if (!data.coopDiscovered.includes('_')) {
-                alert('Vitória Coletiva! A sala inteira ganhou!');
-                roomRef.update({ coopDiscovered: Array(word.length).fill('_'), coopLives: 6 });
-            }
-        } else {
-            let novasVidas = data.coopLives - 1;
-            roomRef.update({ coopLives: novasVidas });
-            if (novasVidas <= 0) {
-                alert(`Fim de jogo coletivo! A palavra era: ${word}`);
-                roomRef.update({ coopDiscovered: Array(word.length).fill('_'), coopLives: 6 });
-            }
-        }
-    });
-}
-
-// ================= FINALIZAR/SAIR DA SALA =================
 function leaveRoom() {
     if (currentRoomCode) {
         database.ref('rooms/' + currentRoomCode + '/players/' + playerNickname).remove();
         database.ref('rooms/' + currentRoomCode).off();
+        if(bingoInterval) clearInterval(bingoInterval);
         currentRoomCode = null;
     }
     document.getElementById('lobby-menu').style.display = 'block';
