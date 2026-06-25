@@ -22,11 +22,9 @@
         <div id="games-menu" class="games-grid">
             <div class="game-card" onclick="startSnake()">
                 <h3>🐍 Jogo da Cobra</h3>
-                <p>O clássico Snake game. Coma os pixels e cresça!</p>
             </div>
             <div class="game-card" onclick="startForca()">
                 <h3>🪓 Jogo da Forca</h3>
-                <p>Adivinhe a palavra secreta antes que seja tarde.</p>
             </div>
         </div>
 
@@ -41,7 +39,7 @@
             <button class="back-btn" onclick="closeGames()">Sair</button>
             <h2>Jogo da Forca</h2>
             <p>Tentativas restantes: <span id="forca-lives">6</span></p>
-            <div id="word-display">_ _ _ _ _</div>
+            <div id="word-display" style="font-size: 2rem; letter-spacing: 5px; margin: 20px 0;">_ _ _ _ _</div>
             <div class="keyboard" id="keyboard"></div>
         </div>
     </section>
@@ -51,32 +49,31 @@
             <h2>Salas Multiplayer</h2>
             <div class="input-group">
                 <label for="username">Seu Apelido</label>
-                <input type="text" id="username" placeholder="Ex: Lucas">
+                <input type="text" id="username" placeholder="Ex: Player1">
             </div>
             <div class="input-group">
                 <label for="game-select">Escolha o Jogo</label>
                 <select id="game-select" onchange="togglePlayerCountVisibility()">
-                    <option value="velha">Jogo da Velha 1v1</option>
-                    <option value="xadrez">Xadrez Rígido 1v1</option>
+                    <option value="velha">Jogo da Velha (2P)</option>
+                    <option value="xadrez">Xadrez Oficial (2P)</option>
                     <option value="forca-coop">Forca Cooperativa (Galera)</option>
-                    <option value="bingo">Bingo Sincronizado (Galera)</option>
-                    <option value="domino">Dominó Clássico</option>
+                    <option value="bingo">Bingo (Galera)</option>
+                    <option value="domino">Dominó Clássico (Apenas 2P por enquanto)</option>
                 </select>
             </div>
             <div class="input-group" id="player-count-group" style="display: none;">
-                <label for="max-players">Quantidade de Jogadores na Sala</label>
+                <label for="max-players">Máximo de Jogadores</label>
                 <select id="max-players">
                     <option value="2">2 Jogadores</option>
                     <option value="3">3 Jogadores</option>
                     <option value="4">4 Jogadores</option>
-                    <option value="6">6 Jogadores</option>
                 </select>
             </div>
             <button class="action-btn" onclick="createRoom()">Criar Nova Sala</button>
             <hr class="divider">
             <div class="input-group">
                 <label for="room-code">Código da Sala Existente</label>
-                <input text="text" id="room-code" placeholder="Ex: XF78K">
+                <input type="text" id="room-code" placeholder="Ex: XF78K">
             </div>
             <button class="action-btn secondary-btn" onclick="joinRoom()">Entrar na Sala</button>
         </div>
@@ -91,7 +88,7 @@
             </div>
             
             <p id="player-status">Aguardando...</p>
-            <p id="turn-indicator" style="margin: 10px 0; font-weight: bold; color: #8257e5;"></p>
+            <p id="turn-indicator" style="margin: 10px 0; font-weight: bold; color: #8257e5; font-size: 1.2rem;"></p>
             
             <button id="start-game-btn" class="action-btn" style="display: none; max-width: 250px; margin: 15px auto;" onclick="triggerStartGame()">Iniciar Jogo</button>
 
@@ -122,25 +119,26 @@
             <div id="multi-bingo" class="mp-subgrid" style="display: none;">
                 <div class="bingo-panel">
                     <div class="current-ball">Última Bola: <span id="bingo-ball">--</span></div>
-                    <p>Números sorteados: <span id="bingo-history" style="font-size: 0.9rem; color: var(--text-muted);">Nenhum</span></p>
+                    <p>Sorteados: <span id="bingo-history" style="font-size: 0.9rem; color: var(--text-muted);">Nenhum</span></p>
                 </div>
-                <h3>Sua Cartela de Bingo</h3>
+                <h3>Sua Cartela</h3>
                 <div id="bingo-card" class="bingo-grid"></div>
                 <button class="action-btn" style="background: #2ed573; max-width: 200px; margin: 20px auto;" onclick="claimBingo()">🚨 BINGO! 🚨</button>
             </div>
 
             <div id="multi-domino" class="mp-subgrid" style="display: none;">
                 <div class="domino-board">
-                    <p>Mesa do Jogo:</p>
-                    <div id="domino-table-line" style="display: flex; gap: 8px; justify-content: center; margin: 20px 0; min-height: 50px; align-items: center;"></div>
+                    <p>Mesa do Jogo (Esquerda ← → Direita):</p>
+                    <div id="domino-table-line" style="display: flex; gap: 4px; justify-content: center; margin: 20px 0; min-height: 50px; align-items: center; flex-wrap: wrap;"></div>
                 </div>
                 <h3>Suas Pedras</h3>
                 <div id="domino-hand" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;"></div>
+                <button class="action-btn secondary-btn" style="max-width: 200px; margin: 20px auto;" onclick="passDominoTurn()">Passar a Vez</button>
             </div>
-
         </div>
     </section>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="app.js"></script>
