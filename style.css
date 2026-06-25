@@ -5,6 +5,8 @@
     --text: #e1e1e6;
     --text-muted: #a8a8b3;
     --danger: #c44141;
+    --chess-light: #eeeed2;
+    --chess-dark: #769656;
 }
 
 * {
@@ -31,7 +33,7 @@ header h1 {
     margin-bottom: 10px;
 }
 
-/* Abas de Navegação */
+/* Abas */
 .tabs {
     display: flex;
     justify-content: center;
@@ -65,7 +67,7 @@ header h1 {
     display: block;
 }
 
-/* Grid de Jogos */
+/* Grids e Elementos Gerais */
 .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -78,8 +80,8 @@ header h1 {
     padding: 20px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
     border: 1px solid #29292e;
+    transition: 0.2s;
 }
 
 .game-card:hover {
@@ -87,11 +89,6 @@ header h1 {
     border-color: var(--primary);
 }
 
-.game-card h3 {
-    margin-bottom: 10px;
-}
-
-/* Arena dos Jogos */
 .game-container {
     background: var(--card-bg);
     border-radius: 12px;
@@ -120,12 +117,70 @@ canvas {
     margin: 20px auto;
 }
 
-/* CSS do Jogo da Forca */
-#word-display {
-    font-size: 2rem;
-    letter-spacing: 10px;
-    margin: 20px 0;
-    text-transform: uppercase;
+/* Lista de Usuários na Sala */
+.players-list-box {
+    background: #121214;
+    padding: 8px 15px;
+    border-radius: 6px;
+    display: inline-block;
+    margin: 10px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Jogo da Velha Grid */
+.velha-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    gap: 10px;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.velha-cell {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+    background: #29292e;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.velha-cell:disabled, .chess-cell:disabled {
+    cursor: not-allowed;
+}
+
+/* XADREZ TABULEIRO GRID */
+.chess-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    justify-content: center;
+    margin: 20px auto;
+    border: 4px solid #29292e;
+}
+
+.chess-cell {
+    width: 50px;
+    height: 50px;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    user-select: none;
+}
+
+.chess-cell.light { background-color: var(--chess-light); color: #000; }
+.chess-cell.dark { background-color: var(--chess-dark); color: #000; }
+.chess-cell.selected { background-color: #f7fc53 !important; }
+
+/* Forca */
+#word-display, .keyboard {
+    margin: 20px auto;
 }
 
 .keyboard {
@@ -133,7 +188,6 @@ canvas {
     grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
     gap: 8px;
     max-width: 500px;
-    margin: 20px auto;
 }
 
 .key-btn {
@@ -144,20 +198,11 @@ canvas {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1rem;
-    transition: background 0.2s;
 }
 
-.key-btn:hover:not(:disabled) {
-    background: var(--primary);
-}
+.key-btn:disabled { opacity: 0.3; }
 
-.key-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Menu Multiplayer / Formulários */
+/* Formulários */
 .lobby-box {
     background: var(--card-bg);
     padding: 30px;
@@ -165,10 +210,6 @@ canvas {
     max-width: 500px;
     margin: 0 auto;
     text-align: center;
-}
-
-.lobby-box h2 {
-    margin-bottom: 20px;
 }
 
 .input-group {
@@ -189,7 +230,6 @@ canvas {
     border: 1px solid #29292e;
     background: #121214;
     color: white;
-    font-size: 1rem;
 }
 
 .action-btn {
@@ -201,21 +241,7 @@ canvas {
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 10px;
-    font-size: 1rem;
-    transition: opacity 0.2s;
 }
 
-.action-btn:hover {
-    opacity: 0.9;
-}
-
-.secondary-btn {
-    background: #29292e;
-}
-
-.divider {
-    margin: 20px 0; 
-    border: 0;
-    border-top: 1px solid #29292e;
-}
+.secondary-btn { background: #29292e; margin-top: 10px;}
+.divider { margin: 20px 0; border: 0; border-top: 1px solid #29292e; }
