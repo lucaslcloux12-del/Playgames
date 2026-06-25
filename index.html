@@ -10,7 +10,7 @@
 
     <header>
         <h1>Multi Arcade Hub</h1>
-        <p>Jogue sozinho ou crie uma sala multiplayer para a galera!</p>
+        <p>Hub de Jogos Clássicos Multiplayer e Singleplayer</p>
     </header>
 
     <div class="tabs">
@@ -55,17 +55,28 @@
             </div>
             <div class="input-group">
                 <label for="game-select">Escolha o Jogo</label>
-                <select id="game-select">
+                <select id="game-select" onchange="togglePlayerCountVisibility()">
                     <option value="velha">Jogo da Velha 1v1</option>
-                    <option value="xadrez">Xadrez 1v1</option>
+                    <option value="xadrez">Xadrez Rígido 1v1</option>
                     <option value="forca-coop">Forca Cooperativa (Galera)</option>
+                    <option value="bingo">Bingo Sincronizado (Galera)</option>
+                    <option value="domino">Dominó Clássico</option>
+                </select>
+            </div>
+            <div class="input-group" id="player-count-group" style="display: none;">
+                <label for="max-players">Quantidade de Jogadores na Sala</label>
+                <select id="max-players">
+                    <option value="2">2 Jogadores</option>
+                    <option value="3">3 Jogadores</option>
+                    <option value="4">4 Jogadores</option>
+                    <option value="6">6 Jogadores</option>
                 </select>
             </div>
             <button class="action-btn" onclick="createRoom()">Criar Nova Sala</button>
             <hr class="divider">
             <div class="input-group">
                 <label for="room-code">Código da Sala Existente</label>
-                <input type="text" id="room-code" placeholder="Ex: XF78K">
+                <input text="text" id="room-code" placeholder="Ex: XF78K">
             </div>
             <button class="action-btn secondary-btn" onclick="joinRoom()">Entrar na Sala</button>
         </div>
@@ -75,12 +86,15 @@
             <h2>Sala: <span id="display-room-code">#</span></h2>
             
             <div class="players-list-box">
-                <strong>Conectados:</strong> <span id="room-players-list">Nenhum</span>
+                <strong>Jogadores (<span id="count-connected">0</span>/<span id="count-max">0</span>):</strong> 
+                <span id="room-players-list">-</span>
             </div>
             
-            <p id="player-status">Identificando seu papel...</p>
+            <p id="player-status">Aguardando...</p>
             <p id="turn-indicator" style="margin: 10px 0; font-weight: bold; color: #8257e5;"></p>
             
+            <button id="start-game-btn" class="action-btn" style="display: none; max-width: 250px; margin: 15px auto;" onclick="triggerStartGame()">Iniciar Jogo</button>
+
             <div id="multi-velha" class="mp-subgrid" style="display: none;">
                 <div class="velha-grid">
                     <button class="velha-cell" data-index="0"></button>
@@ -104,6 +118,26 @@
                 <div id="coop-word-display" style="font-size: 2rem; letter-spacing: 10px; margin: 20px 0;">_ _ _ _</div>
                 <div class="keyboard" id="coop-keyboard"></div>
             </div>
+
+            <div id="multi-bingo" class="mp-subgrid" style="display: none;">
+                <div class="bingo-panel">
+                    <div class="current-ball">Última Bola: <span id="bingo-ball">--</span></div>
+                    <p>Números sorteados: <span id="bingo-history" style="font-size: 0.9rem; color: var(--text-muted);">Nenhum</span></p>
+                </div>
+                <h3>Sua Cartela de Bingo</h3>
+                <div id="bingo-card" class="bingo-grid"></div>
+                <button class="action-btn" style="background: #2ed573; max-width: 200px; margin: 20px auto;" onclick="claimBingo()">🚨 BINGO! 🚨</button>
+            </div>
+
+            <div id="multi-domino" class="mp-subgrid" style="display: none;">
+                <div class="domino-board">
+                    <p>Mesa do Jogo:</p>
+                    <div id="domino-table-line" style="display: flex; gap: 8px; justify-content: center; margin: 20px 0; min-height: 50px; align-items: center;"></div>
+                </div>
+                <h3>Suas Pedras</h3>
+                <div id="domino-hand" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;"></div>
+            </div>
+
         </div>
     </section>
 
