@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Arcade Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Multi Arcade Hub</h1>
+        <p>Jogue sozinho ou crie uma sala para jogar com amigos!</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('singleplayer')">Singleplayer</button>
+        <button class="tab-btn" onclick="switchTab('multiplayer')">Multiplayer (Salas)</button>
+    </div>
+
+    <section id="singleplayer" class="view-section active">
+        <div id="games-menu" class="games-grid">
+            <div class="game-card" onclick="startSnake()">
+                <h3>🐍 Jogo da Cobra</h3>
+                <p>O clássico Snake game. Coma os pixels e cresça!</p>
+            </div>
+            <div class="game-card" onclick="startForca()">
+                <h3>🪓 Jogo da Forca</h3>
+                <p>Adivinhe a palavra secreta antes que seja tarde.</p>
+            </div>
+            <div class="game-card">
+                <h3>♟️ Xadrez (Em breve)</h3>
+                <p>Tabuleiro pronto para a integração com a sua API.</p>
+            </div>
+        </div>
+
+        <div id="snake-arena" class="game-container" style="display: none;">
+            <button class="back-btn" onclick="closeGames()">Sair</button>
+            <h2>Jogo da Cobra</h2>
+            <p>Score: <span id="snake-score">0</span></p>
+            <canvas id="snakeCanvas" width="400" height="400"></canvas>
+        </div>
+
+        <div id="forca-arena" class="game-container" style="display: none;">
+            <button class="back-btn" onclick="closeGames()">Sair</button>
+            <h2>Jogo da Forca</h2>
+            <p>Tentativas restantes: <span id="forca-lives">6</span></p>
+            <div id="word-display">_ _ _ _ _</div>
+            <div class="keyboard" id="keyboard"></div>
+        </div>
+    </section>
+
+    <section id="multiplayer" class="view-section">
+    <div id="lobby-menu" class="lobby-box">
+        <h2>Salas Multiplayer</h2>
+        <div class="input-group">
+            <label for="username">Seu Apelido</label>
+            <input type="text" id="username" placeholder="Ex: Player1">
+        </div>
+        <div class="input-group">
+            <label for="game-select">Escolha o Jogo</label>
+            <select id="game-select">
+                <option value="velha">Jogo da Velha 1v1</option>
+            </select>
+        </div>
+        <button class="action-btn" onclick="createRoom()">Criar Nova Sala</button>
+        
+        <hr class="divider">
+        
+        <div class="input-group">
+            <label for="room-code">Código da Sala Existente</label>
+            <input type="text" id="room-code" placeholder="Ex: XF78K">
+        </div>
+        <button class="action-btn secondary-btn" onclick="joinRoom()">Entrar na Sala</button>
+    </div>
+
+    <div id="multiplayer-arena" class="game-container" style="display: none;">
+        <button class="back-btn" onclick="leaveRoom()">Sair da Sala</button>
+        <h2>Sala: <span id="display-room-code">#</span></h2>
+        <p id="player-status">Aguardando outro jogador...</p>
+        <p id="turn-indicator" style="margin-top: 10px; font-weight: bold; color: #8257e5;"></p>
+        
+        <div class="velha-grid" style="display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; justify-content: center; margin: 30px auto;">
+            <button class="velha-cell" data-index="0" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="1" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="2" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="3" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="4" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="5" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="6" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="7" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+            <button class="velha-cell" data-index="8" style="width: 100px; height: 100px; font-size: 2.5rem; background: #29292e; border: none; color: white; cursor: pointer; border-radius: 8px;"></button>
+        </div>
+    </div>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="app.js"></script>
